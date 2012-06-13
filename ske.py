@@ -5,7 +5,6 @@
 """
 import csv
 import sqlite3
-import sys
 import cPickle as pickle
 from datetime import date
 from dateutil.relativedelta import relativedelta
