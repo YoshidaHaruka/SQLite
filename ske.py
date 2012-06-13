@@ -6,9 +6,19 @@
 import csv
 import sqlite3
 import cPickle as pickle
+import xml.etree.ElementTree as et
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from xml.dom import minidom
 
+def prettify(elem):
+    """Returns a pretty-printed XML string for the Element.
+
+    __ http://www.doughellmann.com/PyMOTW-ja/xml/etree/ElementTree/create.html
+    """
+    rough_string = et.tostring(elem, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent = "  ")
 
 class Person(object):
     """The person class."""
@@ -80,20 +90,32 @@ def main():
         # sql = "select * from SKE48 where firstN like 'A%i' order by H"
         # sql = "select * from SKE48 where firstN like 'A%i' order by H ASC"
         # sql = "select * from SKE48 where firstN like 'A%i' order by H DESC"
-        # sql = "select blood,count(height),avg(height) from SKE48 group by blood"
+        sql = "select blood,count(height),avg(height) from SKE48 group by blood"
         # sql = "select team, avg(B) from SKE48 group by team having avg(B) > 78"
         # sql = "select firstN, date('now') - date(birthday) as date from SKE48"
-        sql = "select object from SKE48"
+        # sql = "select object from SKE48"
 
-        for row in con.execute (sql):
+        # print selected data to display
+        for row in con.execute(sql):
             print row
+
+        # write selected data to XML file
+        tree = et.Element("SKE48")
+        for row in con.execute(sql):
+            obj = et.Element(row[0])
+            obj.set("number", str(row[1]))
+            obj.set("average", str(row[2]))
+            tree.append(obj)
+        f = open('output.xml', 'w')
+        f.write(prettify(tree))
+        f.close()
 
         # write selected data to csv file
         writer = csv.writer(file("output.csv", "w"))
         for row in con.execute(sql):
             writer.writerow(list(row))
 
-        # serialize data to pickle file
+        # serialize all data to pickle file
         pickle.dump(pickleList, open('output.dmp', 'w'))
 
         # close database (con is automatically closed by using 'with statement')
